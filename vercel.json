@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    { "source": "/", "destination": "/guidebook", "permanent": false }
+  ],
+  "rewrites": [
+    { "source": "/guidebook", "destination": "https://shinri-trial-guideboard.vercel.app/guidebook" },
+    { "source": "/guidebook/:path*", "destination": "https://shinri-trial-guideboard.vercel.app/guidebook/:path*" }
+  ]
+}
