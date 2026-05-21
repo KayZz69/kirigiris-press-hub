@@ -1,0 +1,13 @@
+{
+  "name": "kirigiris-press-hub",
+  "version": "1.0.0",
+  "description": "Router project for the kirigiris.press apex domain",
+  "private": true,
+  "scripts": {
+    "dev": "echo 'No dev server needed - this is a routing-only project'",
+    "build": "echo 'No build needed - this is a routing-only project'"
+  },
+  "dependencies": {
+    "@vercel/analytics": "^1.4.1"
+  }
+}

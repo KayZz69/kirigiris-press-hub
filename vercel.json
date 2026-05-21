@@ -6,5 +6,8 @@
   "rewrites": [
     { "source": "/guidebook", "destination": "https://shinri-trial-guideboard.vercel.app/guidebook" },
     { "source": "/guidebook/:path*", "destination": "https://shinri-trial-guideboard.vercel.app/guidebook/:path*" }
-  ]
+  ],
+  "analytics": {
+    "enable": true
+  }
 }

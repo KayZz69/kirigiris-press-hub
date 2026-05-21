@@ -33,6 +33,23 @@ When a sibling product (e.g. `productB`) goes live:
 3. Deploy this hub. The product is now reachable at
    `kirigiris.press/productB`. No changes to the product repo.
 
+## Analytics
+
+This project has Vercel Web Analytics enabled to track traffic across the hub:
+
+- **Package**: `@vercel/analytics` is installed as a dependency
+- **Configuration**: Analytics are enabled via the `analytics.enable` setting in `vercel.json`
+- **Fallback page**: A minimal HTML page in `public/index.html` includes the analytics script for any direct page visits
+- **Dashboard**: Analytics data can be viewed in the Vercel project dashboard after deployment
+
+**Note**: Since this is primarily a routing hub, most traffic is proxied to other applications. For comprehensive analytics across all products, ensure each proxied application (e.g., the guidebook) also has analytics configured independently.
+
+To enable Web Analytics in the Vercel dashboard:
+1. Go to your project settings
+2. Navigate to the Analytics tab
+3. Enable Web Analytics
+4. Deploy the project
+
 ## Deployment
 
 - Vercel project framework preset: **Other** (no build, no install).
