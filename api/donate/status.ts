@@ -1,10 +1,11 @@
 // GET /api/donate/status?id=<uuid v4>
 // Response: { "status": "PENDING|CONFIRMED|CANCELED|CHARGEBACKED",
-//             "amount": <int>, "currency": "RUB" }
+//             "amount": <int>, "currency": "RUB", "tier"?: "t1"|"t2"|"t3" }
 //
 // Always re-queries Platega — this endpoint is the donor-facing source of
-// truth. Response is deliberately minimal: no merchant id, no commission,
-// nothing beyond the three fields above.
+// truth. Response is deliberately minimal: no merchant id, no commission. The
+// optional `tier` is the echoed-back cosmetic marker (present only when one was
+// set at create time); nothing else beyond the fields above is surfaced.
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { readEnv } from '../_lib/env.js';
@@ -40,9 +41,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const tx = await getTransaction(env, id);
     if (!tx) return res.status(404).json({ error: 'not_found' });
-    return res
-      .status(200)
-      .json({ status: tx.status, amount: tx.amount, currency: tx.currency });
+    return res.status(200).json({
+      status: tx.status,
+      amount: tx.amount,
+      currency: tx.currency,
+      // Echoed cosmetic tier marker, present only when Platega returned one.
+      ...(tx.tier ? { tier: tx.tier } : {}),
+    });
   } catch (err) {
     console.error(
       `[donate:status] upstream failure id=${id}`,

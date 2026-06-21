@@ -1,5 +1,6 @@
 // POST /api/donate/create
-// Request:  { "amount": <int rubles ≥ 1>, "paymentMethod": 2|3|11|12|13 }
+// Request:  { "amount": <int rubles ≥ 1>, "paymentMethod": 2|3|11|12|13,
+//             "tier"?: "t1"|"t2"|"t3" }   // tier is optional + cosmetic
 // Response: { "redirect": "<platega url>", "transactionId": "<uuid v4>" }
 //
 // The transaction id is generated server-side; clients never supply ids.
@@ -9,7 +10,7 @@ import { randomUUID } from 'node:crypto';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { readEnv } from '../_lib/env.js';
 import { applyCors } from '../_lib/cors.js';
-import { isValidAmount, isValidPaymentMethod } from '../_lib/validate.js';
+import { isValidAmount, isValidPaymentMethod, normalizeTier } from '../_lib/validate.js';
 import { clientIp, rateLimitOk } from '../_lib/rate-limit.js';
 import { createTransaction, UpstreamError } from '../_lib/platega.js';
 
@@ -37,6 +38,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!isValidAmount(amount) || !isValidPaymentMethod(paymentMethod)) {
     return res.status(400).json({ error: 'invalid_input' });
   }
+  // Cosmetic tier marker — optional; an unknown value is dropped, never a 400.
+  const tier = normalizeTier((body as { tier?: unknown } | null)?.tier);
 
   const id = randomUUID();
 
@@ -50,7 +53,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { redirect } = await createTransaction(env, { id, amount, paymentMethod });
+    const { redirect } = await createTransaction(env, {
+      id,
+      amount,
+      paymentMethod,
+      ...(tier ? { tier } : {}),
+    });
     return res.status(200).json({ redirect, transactionId: id });
   } catch (err) {
     console.error(

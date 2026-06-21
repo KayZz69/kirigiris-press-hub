@@ -44,6 +44,28 @@ describe('buildCreateRequest', () => {
     expect(body.return.startsWith('https://kirigiris.press/guidebook/')).toBe(true);
     expect(body.failedUrl.startsWith('https://kirigiris.press/guidebook/')).toBe(true);
   });
+
+  it('omits payload and keeps the default description when no tier is given', () => {
+    expect('payload' in body).toBe(false);
+    expect(body.description).toBe('Поддержка проекта Shinri Trial Guidebook');
+  });
+});
+
+describe('buildCreateRequest — tier marker', () => {
+  const id = 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d';
+
+  it('forwards the tier as payload and reflects it in the description', () => {
+    const { body } = buildCreateRequest(env, { id, amount: 1199, paymentMethod: 2, tier: 't2' });
+    expect(body.payload).toBe('t2');
+    expect(body.description).toBe('Поддержка проекта Shinri Trial Guidebook — Уровень 2');
+  });
+
+  it('labels each known tier in the description', () => {
+    const label = (tier: string) =>
+      buildCreateRequest(env, { id, amount: 1, paymentMethod: 2, tier }).body.description;
+    expect(label('t1')).toContain('Уровень 1');
+    expect(label('t3')).toContain('Уровень 3');
+  });
 });
 
 describe('readEnv', () => {

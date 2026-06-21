@@ -3,6 +3,7 @@ import {
   isValidAmount,
   isValidPaymentMethod,
   isUuidV4,
+  normalizeTier,
   PAYMENT_METHODS,
 } from '../api/_lib/validate.js';
 
@@ -58,5 +59,23 @@ describe('isUuidV4', () => {
     expect(isUuidV4('')).toBe(false);
     expect(isUuidV4(42)).toBe(false);
     expect(isUuidV4(null)).toBe(false);
+  });
+});
+
+describe('normalizeTier', () => {
+  it('returns the tier id for the three known tiers', () => {
+    expect(normalizeTier('t1')).toBe('t1');
+    expect(normalizeTier('t2')).toBe('t2');
+    expect(normalizeTier('t3')).toBe('t3');
+  });
+
+  it('drops unknown, malformed, and non-string values (never throws)', () => {
+    expect(normalizeTier('t4')).toBeUndefined();
+    expect(normalizeTier('T1')).toBeUndefined();
+    expect(normalizeTier('')).toBeUndefined();
+    expect(normalizeTier(2)).toBeUndefined();
+    expect(normalizeTier(null)).toBeUndefined();
+    expect(normalizeTier(undefined)).toBeUndefined();
+    expect(normalizeTier({})).toBeUndefined();
   });
 });
