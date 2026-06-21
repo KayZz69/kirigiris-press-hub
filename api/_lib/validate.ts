@@ -15,6 +15,18 @@ export function isValidPaymentMethod(value: unknown): value is number {
   return typeof value === 'number' && PAYMENT_METHODS.has(value);
 }
 
+// Known one-time support tiers (mirrors the guidebook's DONATION_TIERS ids). The
+// tier is a COSMETIC marker only — it never gates anything and is not an
+// entitlement; perk fulfilment is manual against the confirmed amount.
+export const DONATION_TIERS: ReadonlySet<string> = new Set(['t1', 't2', 't3']);
+
+// Returns the tier id when it is a recognized value, else undefined. An unknown
+// or malformed tier is silently dropped — a bad cosmetic marker must never fail
+// an otherwise-valid donation.
+export function normalizeTier(value: unknown): string | undefined {
+  return typeof value === 'string' && DONATION_TIERS.has(value) ? value : undefined;
+}
+
 const UUID_V4_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 

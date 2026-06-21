@@ -79,6 +79,31 @@ describe('POST /api/donate/create', () => {
     expect(sent.id).not.toBe('client-chosen-id');
   });
 
+  it('forwards a valid tier to Platega as payload + labelled description', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(200, { redirect: 'https://pay.platega.test/abc' }));
+    const { res, statusCode } = mockRes();
+    await createHandler(
+      mockReq({ method: 'POST', body: { amount: 1199, paymentMethod: 2, tier: 't2' } }),
+      res,
+    );
+    expect(statusCode()).toBe(200);
+    const sent = JSON.parse(fetchMock.mock.calls[0]![1].body);
+    expect(sent.payload).toBe('t2');
+    expect(sent.description).toContain('Уровень 2');
+  });
+
+  it('drops an unknown tier but still creates the donation (no payload)', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(200, { redirect: 'https://pay.platega.test/abc' }));
+    const { res, statusCode } = mockRes();
+    await createHandler(
+      mockReq({ method: 'POST', body: { amount: 100, paymentMethod: 2, tier: 'gold' } }),
+      res,
+    );
+    expect(statusCode()).toBe(200);
+    const sent = JSON.parse(fetchMock.mock.calls[0]![1].body);
+    expect('payload' in sent).toBe(false);
+  });
+
   it('maps upstream failure to 502', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(500, { error: 'boom' }));
     const { res, statusCode } = mockRes();
@@ -130,6 +155,35 @@ describe('GET /api/donate/status', () => {
     const { res, statusCode, jsonBody } = mockRes();
     await statusHandler(mockReq({ method: 'GET', query: { id: UUID } }), res);
     expect(statusCode()).toBe(200);
+    expect(jsonBody()).toEqual({ status: 'CONFIRMED', amount: 100, currency: 'RUB' });
+  });
+
+  it('echoes a recognized tier from the Platega payload', async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(200, {
+        id: UUID,
+        status: 'CONFIRMED',
+        paymentDetails: { amount: 1199, currency: 'RUB' },
+        payload: 't2',
+      }),
+    );
+    const { res, statusCode, jsonBody } = mockRes();
+    await statusHandler(mockReq({ method: 'GET', query: { id: UUID } }), res);
+    expect(statusCode()).toBe(200);
+    expect(jsonBody()).toEqual({ status: 'CONFIRMED', amount: 1199, currency: 'RUB', tier: 't2' });
+  });
+
+  it('does not surface an unrecognized payload as a tier', async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(200, {
+        id: UUID,
+        status: 'CONFIRMED',
+        paymentDetails: { amount: 100, currency: 'RUB' },
+        payload: 'garbage',
+      }),
+    );
+    const { res, jsonBody } = mockRes();
+    await statusHandler(mockReq({ method: 'GET', query: { id: UUID } }), res);
     expect(jsonBody()).toEqual({ status: 'CONFIRMED', amount: 100, currency: 'RUB' });
   });
 
